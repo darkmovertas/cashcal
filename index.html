@@ -8,9 +8,8 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0c1626;--surf:#111e30;--card:#162035;--card2:#1e2d47;--bord:#253552;
-  --txt:#d8e8fa;--mut:#5a7898;--grn:#4ade80;--red:#f87171;--ylw:#fbbf24;--acc:#818cf8;
-  --font:'Nunito',sans-serif;--mono:'Space Mono',monospace;--rad:10px;
+  --bg:#f0f4f8;--surf:#ffffff;--card:#f8fafc;--card2:#edf2f7;--bord:#cbd5e0;
+  --txt:#1a2535;--mut:#718096;--grn:#16a34a;--red:#dc2626;--ylw:#d97706;--acc:#4f46e5;
 }
 html{font-size:15px}
 body{background:var(--bg);color:var(--txt);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
@@ -87,7 +86,7 @@ select option{background:var(--card2);color:var(--txt)}
 .day.today{border-color:var(--acc)!important}
 .day.other{opacity:.2;pointer-events:none}
 .day.warn{border-color:var(--ylw)}
-.day.past{background:rgba(12,18,38,.5)}
+.day.past{background:rgba(0,0,0,.04))}
 .dnum{font-size:11px;font-weight:800;color:var(--mut);width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .day.today .dnum{background:var(--acc);color:#fff}
 .ddots{display:flex;flex-wrap:wrap;gap:2px;margin:2px 0}
