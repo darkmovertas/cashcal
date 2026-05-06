@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CashCal — Budget Forecaster</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Space+Mono&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0c1626;--surf:#111e30;--card:#162035;--card2:#1e2d47;--bord:#253552;
+  --txt:#d8e8fa;--mut:#5a7898;--grn:#4ade80;--red:#f87171;--ylw:#fbbf24;--acc:#818cf8;
+  --font:'Nunito',sans-serif;--mono:'Space Mono',monospace;--rad:10px;
+}
+html{font-size:15px}
+body{background:var(--bg);color:var(--txt);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
+button{cursor:pointer;font-family:var(--font);border:none}
+input,select,textarea{font-family:var(--font);background:var(--card);border:1px solid var(--bord);color:var(--txt)}
+select option{background:var(--card2);color:var(--txt)}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--bord);border-radius:2px}
+
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:0 14px;height:52px;flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--bord);gap:8px}
+.hdr-logo{font-size:16px;font-weight:900;color:var(--acc);letter-spacing:-0.3px;flex-shrink:0}
+.hdr-nav{display:flex;align-items:center;gap:6px;flex:1;justify-content:center}
+.hdr-nav h2{font-size:14px;font-weight:800;min-width:148px;text-align:center;white-space:nowrap}
+.nav-btn,.hdr-btn{background:var(--card);border:1px solid var(--bord);color:var(--txt);height:30px;border-radius:7px;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;transition:background .12s;flex-shrink:0}
+.nav-btn{width:30px;font-size:18px;line-height:1}
+.hdr-btn{padding:0 10px;gap:4px}
+.nav-btn:hover,.hdr-btn:hover{background:var(--card2)}
+.hdr-btn.pri{background:var(--acc);color:#fff;border-color:var(--acc)}
+.hdr-btn.pri:hover{opacity:.88}
+.hdr-right{display:flex;gap:5px;flex-shrink:0}
+
+/* LAYOUT */
+.layout{display:flex;flex:1;overflow:hidden;min-height:0}
+
+/* SIDEBAR */
+.sidebar{width:234px;flex-shrink:0;background:var(--surf);border-right:1px solid var(--bord);display:flex;flex-direction:column;overflow-y:auto;padding:10px;gap:6px}
+@media(max-width:750px){.sidebar{display:none}}
+.sb-title{font-size:10px;font-weight:700;letter-spacing:1px;color:var(--mut);text-transform:uppercase;padding:0 2px 4px}
+.acct-card{background:var(--card);border:1px solid var(--bord);border-radius:var(--rad);padding:9px 10px 9px 13px;cursor:pointer;transition:all .12s;position:relative;overflow:hidden}
+.acct-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.acct-card:hover{background:var(--card2)}
+.acct-card.sel{border-color:var(--acc)}
+.acct-card .aname{font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.acct-card .atype{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin:1px 0 5px}
+.acct-card .abal{font-family:var(--mono);font-size:13px;font-weight:700}
+.acct-card .aproj{font-size:10px;color:var(--mut);margin-top:3px}
+.acct-card .aproj span{font-family:var(--mono)}
+.sb-add{background:transparent;border:1px dashed var(--bord);border-radius:var(--rad);color:var(--mut);padding:7px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:5px;transition:all .12s;cursor:pointer}
+.sb-add:hover{border-color:var(--acc);color:var(--acc)}
+.sb-net{margin-top:4px;padding:8px 10px;border-top:1px solid var(--bord)}
+.sb-net .nl{font-size:9px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.sb-net .nv{font-family:var(--mono);font-size:16px;font-weight:700}
+.sb-actions{display:flex;gap:5px;padding:4px 0 2px}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+
+/* MOBILE STRIP */
+.mob-strip{display:none;gap:8px;padding:8px 10px;flex-shrink:0;overflow-x:auto;background:var(--surf);border-bottom:1px solid var(--bord);scrollbar-width:none}
+.mob-strip::-webkit-scrollbar{display:none}
+@media(max-width:750px){.mob-strip{display:flex}}
+.mob-card{flex-shrink:0;background:var(--card);border:1px solid var(--bord);border-radius:8px;padding:6px 10px;cursor:pointer;min-width:100px;transition:all .12s;position:relative;overflow:hidden}
+.mob-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.mob-card.sel{border-color:var(--acc)}
+.mob-card .aname{font-size:11px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mob-card .atype{font-size:8px;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin:1px 0 3px}
+.mob-card .abal{font-family:var(--mono);font-size:12px;font-weight:700}
+
+/* VIEW TOGGLE */
+.vtog{display:flex;gap:3px;padding:8px 10px;flex-shrink:0;background:var(--surf);border-bottom:1px solid var(--bord)}
+.vbtn{flex:1;padding:6px;border-radius:7px;font-size:11px;font-weight:700;background:var(--card);color:var(--mut);border:1px solid var(--bord);transition:all .12s;cursor:pointer}
+.vbtn.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+
+/* CALENDAR */
+.cal-wrap{flex:1;overflow-y:auto;padding:8px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dh{text-align:center;font-size:9px;font-weight:700;color:var(--mut);letter-spacing:.5px;text-transform:uppercase;padding:2px 0 7px}
+.day{background:var(--card);border:1px solid var(--bord);border-radius:7px;min-height:78px;padding:5px;cursor:pointer;transition:border-color .12s,background .12s;display:flex;flex-direction:column;position:relative;user-select:none}
+@media(max-width:500px){.day{min-height:58px;padding:3px}}
+.day:hover{background:var(--card2)}
+.day.today{border-color:var(--acc)!important}
+.day.other{opacity:.2;pointer-events:none}
+.day.warn{border-color:var(--ylw)}
+.day.past{background:rgba(12,18,38,.5)}
+.dnum{font-size:11px;font-weight:800;color:var(--mut);width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.day.today .dnum{background:var(--acc);color:#fff}
+.ddots{display:flex;flex-wrap:wrap;gap:2px;margin:2px 0}
+.ddot{width:6px;height:6px;border-radius:50%}
+.dbal{margin-top:auto;font-family:var(--mono);font-size:9px;font-weight:700;text-align:right;padding-top:3px;line-height:1}
+@media(max-width:500px){.dbal{display:none}}
+.warn-pip{position:absolute;top:3px;right:3px;width:5px;height:5px;border-radius:50%;background:var(--ylw)}
+
+/* FORECAST */
+.fc-wrap{flex:1;overflow-y:auto;padding:8px}
+.fc-dh{font-size:10px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;padding:10px 4px 3px}
+.fc-dh.warn{color:var(--ylw)}
+.fc-item{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--bord);border-radius:9px;padding:9px 11px;cursor:pointer;transition:background .12s;margin-bottom:3px}
+.fc-item:hover{background:var(--card2)}
+.fc-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.fc-lbl{flex:1}
+.fc-lbl .l1{font-size:13px;font-weight:700}
+.fc-lbl .l2{font-size:10px;color:var(--mut);margin-top:1px}
+.fc-right{text-align:right}
+.fc-amt{font-family:var(--mono);font-size:12px;font-weight:700}
+.fc-bal{font-family:var(--mono);font-size:10px;color:var(--mut);margin-top:2px}
+
+/* OVERLAY */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.78);z-index:500;display:none;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+@media(min-width:580px){.overlay{align-items:center;padding:20px}}
+.modal{background:var(--surf);border:1px solid var(--bord);border-radius:18px 18px 0 0;width:100%;max-width:490px;max-height:90vh;overflow-y:auto;padding:18px;animation:su .18s ease}
+@media(min-width:580px){.modal{border-radius:16px}}
+@keyframes su{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+
+/* MODAL INTERNALS */
+.mhdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:16px;gap:8px}
+.mtit{font-size:17px;font-weight:900}
+.mclose{background:var(--card);border:1px solid var(--bord);color:var(--mut);width:28px;height:28px;border-radius:7px;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mclose:hover{color:var(--txt)}
+
+/* FORM */
+.fg{margin-bottom:12px}
+.fl{display:block;font-size:10px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.fi{width:100%;background:var(--card);border:1px solid var(--bord);border-radius:8px;color:var(--txt);padding:9px 11px;font-size:14px}
+.fi:focus{outline:none;border-color:var(--acc)}
+.fi::placeholder{color:var(--mut);opacity:1}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+textarea.fi{resize:vertical;min-height:52px}
+.tt{display:flex;gap:4px;margin-bottom:12px}
+.tb{flex:1;padding:8px;border-radius:7px;font-size:12px;font-weight:700;background:var(--card);color:var(--mut);border:1px solid var(--bord);transition:all .12s;cursor:pointer}
+.tb.ti{background:rgba(74,222,128,.1);color:var(--grn);border-color:rgba(74,222,128,.35)}
+.tb.te{background:rgba(248,113,113,.1);color:var(--red);border-color:rgba(248,113,113,.35)}
+.cbr{display:flex;align-items:center;gap:7px;margin-bottom:12px}
+.cbr input[type=checkbox]{width:15px;height:15px;accent-color:var(--acc);cursor:pointer}
+.cbr label{font-size:13px;font-weight:600;cursor:pointer}
+.brow{display:flex;gap:8px;margin-top:14px}
+.brow .btn{flex:1}
+.btn{border:none;border-radius:9px;padding:10px 16px;font-size:13px;font-weight:700;cursor:pointer;transition:all .12s}
+.bp{background:var(--acc);color:#fff}
+.bp:hover{opacity:.88}
+.bd{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.3)}
+.bd:hover{background:rgba(248,113,113,.2)}
+.bg{background:var(--card);color:var(--mut);border:1px solid var(--bord)}
+.bg:hover{color:var(--txt)}
+
+/* COLOR PICKER */
+.cp{display:flex;gap:7px;flex-wrap:wrap;margin-top:4px}
+.cs{width:24px;height:24px;border-radius:50%;cursor:pointer;border:2px solid transparent;transition:transform .12s}
+.cs.on{border-color:#fff;transform:scale(1.25)}
+
+/* DAY MODAL TX LIST */
+.dtxl{display:flex;flex-direction:column;gap:6px;margin:12px 0}
+.dtx{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--bord);border-radius:9px;padding:9px 11px;cursor:pointer;transition:background .12s}
+.dtx:hover{background:var(--card2)}
+.dtx-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.dtx-lbl{flex:1}
+.dtx-lbl .l1{font-size:13px;font-weight:700}
+.dtx-lbl .l2{font-size:10px;color:var(--mut);margin-top:1px}
+.dtx-amt{font-family:var(--mono);font-size:12px;font-weight:700}
+
+.addbtn{width:100%;background:rgba(129,140,248,.08);border:1px dashed rgba(129,140,248,.3);color:var(--acc);border-radius:9px;padding:9px;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer}
+.addbtn:hover{background:rgba(129,140,248,.15)}
+
+.tip{background:rgba(129,140,248,.07);border:1px solid rgba(129,140,248,.2);border-radius:8px;padding:10px 12px;margin-bottom:12px;font-size:12px;color:var(--mut);line-height:1.55}
+.tip strong{color:var(--txt)}
+.empty{color:var(--mut);font-size:13px;text-align:center;padding:30px 20px;line-height:1.6}
+.warn-badge{display:inline-block;background:rgba(251,191,36,.15);color:var(--ylw);border:1px solid rgba(251,191,36,.3);border-radius:5px;font-size:10px;font-weight:700;padding:2px 6px;margin-left:6px;vertical-align:middle}
+.sep{height:1px;background:var(--bord);margin:12px 0}
+</style>
+</head>
+<body>
+<div class="app" id="app">
+  <header class="hdr">
+    <span class="hdr-logo">💰 CashCal</span>
+    <div class="hdr-nav">
+      <button class="nav-btn" id="btn-prev">‹</button>
+      <h2 id="month-lbl"></h2>
+      <button class="nav-btn" id="btn-next">›</button>
+    </div>
+    <div class="hdr-right">
+      <button class="hdr-btn" id="btn-today">Today</button>
+      <button class="hdr-btn pri" id="btn-add">+ Add</button>
+    </div>
+  </header>
+  <div class="layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main">
+      <div class="mob-strip" id="mob-strip"></div>
+      <div class="vtog">
+        <button class="vbtn on" data-view="calendar">📅 Calendar</button>
+        <button class="vbtn" data-view="upcoming">📋 Upcoming</button>
+      </div>
+      <div class="cal-wrap" id="cal-wrap"></div>
+      <div class="fc-wrap" id="fc-wrap" style="display:none"></div>
+    </main>
+  </div>
+  <div class="overlay" id="overlay">
+    <div class="modal" id="modal"></div>
+  </div>
+</div>
+
+<script>
+/* ═══ CashCal ════════════════════════════════════════════ */
+
+const SKEY = 'cashcal_v2';
+const COLORS = ['#818cf8','#38bdf8','#34d399','#fb923c','#f472b6','#a78bfa','#22d3ee','#fbbf24','#f87171','#4ade80'];
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAYS = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+const ATYPES = {transaction:'Transaction',savings:'Savings',credit:'Credit Card',bnpl:'Buy Now Pay Later'};
+const RECURS = [['','One-off'],['weekly','Weekly'],['fortnightly','Fortnightly'],['monthly','Monthly'],['quarterly','Quarterly'],['annually','Annually']];
+
+/* ─── Utilities ─────────────────────────────────────── */
+const uid = () => Math.random().toString(36).slice(2,10);
+const todayISO = () => new Date().toISOString().split('T')[0];
+
+function addDays(iso, n) {
+  const d = new Date(iso + 'T12:00:00');
+  d.setDate(d.getDate() + n);
+  return d.toISOString().split('T')[0];
+}
+
+function addMonths(iso, n) {
+  const d = new Date(iso + 'T12:00:00');
+  d.setMonth(d.getMonth() + n);
+  return d.toISOString().split('T')[0];
+}
+
+function fmt(n, short) {
+  if (n == null || isNaN(n)) return '$0.00';
+  const abs = Math.abs(n);
+  let s;
+  if (short) {
+    if (abs >= 10000) s = (abs/1000).toFixed(0) + 'k';
+    else if (abs >= 1000) s = (abs/1000).toFixed(1) + 'k';
+    else s = Math.round(abs).toString();
+  } else {
+    s = abs.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+  return (n < 0 ? '−$' : '$') + s;
+}
+
+function fmtDateLong(iso) {
+  return new Date(iso + 'T12:00:00').toLocaleDateString('en-AU', {weekday:'long',day:'numeric',month:'long'});
+}
+
+function fmtDateShort(iso) {
+  return new Date(iso + 'T12:00:00').toLocaleDateString('en-AU', {weekday:'short',day:'numeric',month:'short'});
+}
+
+function esc(s) {
+  return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ─── Forecast Engine ───────────────────────────────── */
+function expandRange(txns, fromISO, toISO) {
+  const out = [];
+  for (const t of txns) {
+    if (t.date > toISO) continue;
+    if (!t.recurrence) {
+      if (t.date >= fromISO) out.push({...t, eDate: t.date});
+    } else {
+      const end = t.endDate || toISO;
+      let cur = t.date;
+      let s = 0;
+      while (cur < fromISO && s++ < 800) {
+        if      (t.recurrence === 'weekly')       cur = addDays(cur, 7);
+        else if (t.recurrence === 'fortnightly')  cur = addDays(cur, 14);
+        else if (t.recurrence === 'monthly')      cur = addMonths(cur, 1);
+        else if (t.recurrence === 'quarterly')    cur = addMonths(cur, 3);
+        else if (t.recurrence === 'annually')     cur = addMonths(cur, 12);
+        else break;
+      }
+      s = 0;
+      while (cur <= toISO && cur <= end && s++ < 800) {
+        out.push({...t, eDate: cur});
+        if      (t.recurrence === 'weekly')       cur = addDays(cur, 7);
+        else if (t.recurrence === 'fortnightly')  cur = addDays(cur, 14);
+        else if (t.recurrence === 'monthly')      cur = addMonths(cur, 1);
+        else if (t.recurrence === 'quarterly')    cur = addMonths(cur, 3);
+        else if (t.recurrence === 'annually')     cur = addMonths(cur, 12);
+        else break;
+      }
+    }
+  }
+  return out;
+}
+
+function buildForecast(accounts, txns) {
+  const now = todayISO();
+  const horizon = addMonths(now, 6);
+  const lookback = addMonths(now, -2);
+
+  const allExp = expandRange(txns, lookback, horizon);
+  const txByDate = {};
+  for (const t of allExp) {
+    (txByDate[t.eDate] = txByDate[t.eDate] || []).push(t);
+  }
+
+  const futExp = expandRange(txns, now, horizon);
+  const delta = {};
+  for (const a of accounts) delta[a.id] = {};
+  for (const t of futExp) {
+    if (!delta[t.accountId]) continue;
+    delta[t.accountId][t.eDate] = (delta[t.accountId][t.eDate] || 0) + t.amount;
+    if (t.isTransfer && t.toAccountId && delta[t.toAccountId] !== undefined) {
+      delta[t.toAccountId][t.eDate] = (delta[t.toAccountId][t.eDate] || 0) - t.amount;
+    }
+  }
+
+  const balMap = {};
+  for (const a of accounts) {
+    balMap[a.id] = {};
+    let r = parseFloat(a.balance) || 0;
+    let d = now;
+    while (d <= horizon) {
+      r += (delta[a.id][d] || 0);
+      balMap[a.id][d] = r;
+      d = addDays(d, 1);
+    }
+  }
+
+  const warns = new Set();
+  for (const a of accounts) {
+    const thr = parseFloat(a.lowAlert);
+    if (isNaN(thr)) continue;
+    for (const [d, bal] of Object.entries(balMap[a.id] || {})) {
+      if (bal < thr) warns.add(d);
+    }
+  }
+
+  return { txByDate, balMap, warns };
+}
+
+/* ─── Default Data ──────────────────────────────────── */
+const T = todayISO();
+
+const DEFAULT_ACCOUNTS = [
+  {id:'a1',name:'ANZ Everyday',  type:'transaction',balance:1250, color:'#818cf8',lowAlert:200},
+  {id:'a2',name:'ING Savings',   type:'savings',    balance:3400, color:'#38bdf8',lowAlert:500},
+  {id:'a3',name:'Visa Credit',   type:'credit',     balance:-450, color:'#fb923c',lowAlert:-4500,creditLimit:5000},
+  {id:'a4',name:'Afterpay',      type:'bnpl',       balance:-180, color:'#f472b6',lowAlert:-2000},
+];
+
+const DEFAULT_TRANSACTIONS = [
+  {id:'t1',label:'JobSeeker',           accountId:'a1',amount:760,   date:T,recurrence:'fortnightly',endDate:'',isTransfer:false,toAccountId:'',notes:'Centrelink fortnightly'},
+  {id:'t2',label:'Rent',                accountId:'a1',amount:-380,  date:T,recurrence:'fortnightly',endDate:'',isTransfer:false,toAccountId:'',notes:''},
+  {id:'t3',label:'Netflix',             accountId:'a3',amount:-17.99,date:T,recurrence:'monthly',    endDate:'',isTransfer:false,toAccountId:'',notes:''},
+  {id:'t4',label:'Phone Plan',          accountId:'a1',amount:-35,   date:T,recurrence:'monthly',    endDate:'',isTransfer:false,toAccountId:'',notes:'Amaysim'},
+  {id:'t5',label:'Credit Card Payment', accountId:'a1',amount:-200,  date:T,recurrence:'monthly',    endDate:'',isTransfer:true, toAccountId:'a3',notes:'Monthly Visa payment'},
+  {id:'t6',label:'Afterpay Instalment', accountId:'a1',amount:-45,   date:T,recurrence:'fortnightly',endDate:'',isTransfer:true, toAccountId:'a4',notes:''},
+];
+
+/* ─── State ─────────────────────────────────────────── */
+let state = {
+  accounts: DEFAULT_ACCOUNTS,
+  transactions: DEFAULT_TRANSACTIONS,
+  selectedAcct: 'a1',
+  view: 'calendar',
+  year: new Date().getFullYear(),
+  month: new Date().getMonth(),
+};
+
+function loadState() {
+  try {
+    const s = localStorage.getItem(SKEY);
+    if (!s) return;
+    const saved = JSON.parse(s);
+    if (saved.accounts) state.accounts = saved.accounts;
+    if (saved.transactions) state.transactions = saved.transactions;
+    if (saved.selectedAcct) state.selectedAcct = saved.selectedAcct;
+  } catch {}
+}
+
+function saveState() {
+  try {
+    localStorage.setItem(SKEY, JSON.stringify({
+      accounts: state.accounts,
+      transactions: state.transactions,
+      selectedAcct: state.selectedAcct,
+    }));
+  } catch {}
+}
+
+function getAcct(id) { return state.accounts.find(a => a.id === id); }
+
+/* ─── Main App ──────────────────────────────────────── */
+const app = {
+  forecast: null,
+
+  init() {
+    loadState();
+    this.recompute();
+    this.render();
+    this.bindHeader();
+    this.bindViewToggle();
+    document.getElementById('overlay').addEventListener('click', e => {
+      if (e.target === document.getElementById('overlay')) this.closeModal();
+    });
+  },
+
+  recompute() {
+    this.forecast = buildForecast(state.accounts, state.transactions);
+  },
+
+  render() {
+    this.renderMonthLabel();
+    this.renderSidebar();
+    this.renderMobStrip();
+    if (state.view === 'calendar') this.renderCalendar();
+    else this.renderForecast();
+  },
+
+  renderMonthLabel() {
+    document.getElementById('month-lbl').textContent = MONTHS[state.month] + ' ' + state.year;
+  },
+
+  renderSidebar() {
+    const { balMap } = this.forecast;
+    const now = todayISO();
+    const in30 = addDays(now, 30);
+    let h = `<div class="sb-title">Accounts</div>`;
+
+    for (const a of state.accounts) {
+      const curBal = balMap[a.id]?.[now] ?? a.balance;
+      const proj30 = balMap[a.id]?.[in30] ?? curBal;
+      const diff = proj30 - curBal;
+      const balCol = curBal < 0 ? 'var(--red)' : a.color;
+      const projCol = proj30 < 0 ? 'var(--red)' : diff >= 0 ? 'var(--grn)' : 'var(--mut)';
+      const diffCol = diff >= 0 ? 'var(--grn)' : 'var(--red)';
+      const sel = state.selectedAcct === a.id ? ' sel' : '';
+      h += `<div class="acct-card${sel}" onclick="app.selectAcct('${a.id}')" ondblclick="app.editAcct('${a.id}')">
+        <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${a.color};border-radius:2px 0 0 2px"></div>
+        <div class="aname">${esc(a.name)}</div>
+        <div class="atype">${ATYPES[a.type] || a.type}</div>
+        <div class="abal" style="color:${balCol}">${fmt(curBal)}</div>
+        <div class="aproj">30d: <span style="color:${projCol}">${fmt(proj30)}</span>
+        <span style="color:${diffCol}">&nbsp;(${diff >= 0 ? '+' : ''}${fmt(diff, true)})</span></div>
+      </div>`;
+    }
+
+    h += `<button class="sb-add" onclick="app.newAcct()">+ Add Account</button>`;
+
+    const net = state.accounts.reduce((s, a) => s + (balMap[a.id]?.[now] ?? a.balance), 0);
+    h += `<div class="sb-net">
+      <div class="nl">Net Position</div>
+      <div class="nv" style="color:${net >= 0 ? 'var(--grn)' : 'var(--red)'}">${fmt(net)}</div>
+    </div>`;
+
+    h += `<div class="sb-actions">
+      <button class="btn bg" style="flex:1;font-size:11px;padding:6px" onclick="app.exportData()">⬇ Export</button>
+      <button class="btn bg" style="flex:1;font-size:11px;padding:6px" onclick="app.importData()">⬆ Import</button>
+    </div>`;
+
+    document.getElementById('sidebar').innerHTML = h;
+  },
+
+  renderMobStrip() {
+    const { balMap } = this.forecast;
+    const now = todayISO();
+    let h = '';
+    for (const a of state.accounts) {
+      const curBal = balMap[a.id]?.[now] ?? a.balance;
+      const sel = state.selectedAcct === a.id ? ' sel' : '';
+      h += `<div class="mob-card${sel}" onclick="app.selectAcct('${a.id}')" ondblclick="app.editAcct('${a.id}')">
+        <div style="position:absolute;left:0;top:0;bottom:0;width:3px;background:${a.color}"></div>
+        <div class="aname">${esc(a.name)}</div>
+        <div class="atype">${ATYPES[a.type] || a.type}</div>
+        <div class="abal" style="color:${curBal < 0 ? 'var(--red)' : a.color}">${fmt(curBal)}</div>
+      </div>`;
+    }
+    h += `<div class="mob-card" onclick="app.newAcct()" style="display:flex;align-items:center;justify-content:center;color:var(--mut);min-width:50px;font-size:22px;font-weight:700">+</div>`;
+    document.getElementById('mob-strip').innerHTML = h;
+  },
+
+  renderCalendar() {
+    const { txByDate, balMap, warns } = this.forecast;
+    const { year, month, selectedAcct } = state;
+    const now = todayISO();
+
+    const firstDay = new Date(year, month, 1).getDay();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    const prevY = month === 0 ? year - 1 : year;
+    const prevM = month === 0 ? 11 : month - 1;
+    const prevDays = new Date(prevY, prevM + 1, 0).getDate();
+    const nextY = month === 11 ? year + 1 : year;
+    const nextM = month === 11 ? 0 : month + 1;
+
+    let h = `<div class="cal-grid">`;
+    DAYS.forEach(d => { h += `<div class="cal-dh">${d}</div>`; });
+
+    function dayCell(iso, other) {
+      const txs = txByDate[iso] || [];
+      const isToday = iso === now;
+      const isPast = iso < now;
+      const isWarn = warns.has(iso) && !other;
+      const bal = balMap[selectedAcct]?.[iso];
+      const d = parseInt(iso.split('-')[2]);
+
+      let cls = 'day';
+      if (other) cls += ' other';
+      if (isToday) cls += ' today';
+      else if (isPast) cls += ' past';
+      if (isWarn) cls += ' warn';
+
+      const dots = txs.slice(0, 6).map(t => {
+        const a = getAcct(t.accountId);
+        return `<div class="ddot" style="background:${a?.color || '#888'}"></div>`;
+      }).join('') + (txs.length > 6 ? `<div style="font-size:7px;color:var(--mut)">+${txs.length - 6}</div>` : '');
+
+      const balHtml = bal !== undefined && !other
+        ? `<div class="dbal" style="color:${bal < 0 ? 'var(--red)' : bal < 500 ? 'var(--ylw)' : 'var(--grn)'}">${fmt(bal, true)}</div>`
+        : '';
+
+      return `<div class="${cls}" onclick="app.openDayModal('${iso}')">
+        <div class="dnum">${d}</div>
+        <div class="ddots">${dots}</div>
+        ${balHtml}
+        ${isWarn ? '<div class="warn-pip"></div>' : ''}
+      </div>`;
+    }
+
+    for (let i = firstDay - 1; i >= 0; i--) {
+      const d = prevDays - i;
+      h += dayCell(`${prevY}-${String(prevM + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`, true);
+    }
+    for (let d = 1; d <= daysInMonth; d++) {
+      h += dayCell(`${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`, false);
+    }
+    const total = firstDay + daysInMonth;
+    const nextPad = total % 7 === 0 ? 0 : 7 - (total % 7);
+    for (let d = 1; d <= nextPad; d++) {
+      h += dayCell(`${nextY}-${String(nextM + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`, true);
+    }
+
+    h += `</div>`;
+    const cw = document.getElementById('cal-wrap');
+    cw.innerHTML = h;
+    cw.style.display = '';
+    document.getElementById('fc-wrap').style.display = 'none';
+  },
+
+  renderForecast() {
+    const { txByDate, balMap, warns } = this.forecast;
+    const { selectedAcct } = state;
+    const now = todayISO();
+    const horizon = addMonths(now, 6);
+
+    const dates = Object.keys(txByDate).filter(d => d >= now && d <= horizon).sort();
+    let h = '';
+
+    for (const date of dates) {
+      const txs = txByDate[date].filter(t =>
+        t.accountId === selectedAcct || (t.isTransfer && t.toAccountId === selectedAcct)
+      );
+      if (!txs.length) continue;
+      const isWarn = warns.has(date);
+      const bal = balMap[selectedAcct]?.[date];
+      h += `<div class="fc-dh${isWarn ? ' warn' : ''}">${isWarn ? '⚠ ' : ''}${fmtDateShort(date)}</div>`;
+      for (const t of txs) {
+        const acct = getAcct(t.accountId);
+        const incoming = t.isTransfer && t.toAccountId === selectedAcct;
+        const dispAmt = incoming ? -t.amount : t.amount;
+        const amtCol = dispAmt >= 0 ? 'var(--grn)' : 'var(--red)';
+        const rec = t.recurrence ? ` · ${t.recurrence}` : '';
+        h += `<div class="fc-item" onclick="app.editTx('${t.id}')">
+          <div class="fc-dot" style="background:${acct?.color || '#888'}"></div>
+          <div class="fc-lbl">
+            <div class="l1">${esc(t.label)}</div>
+            <div class="l2">${esc(acct?.name || '')}${incoming ? ' (incoming)' : ''}${rec}</div>
+          </div>
+          <div class="fc-right">
+            <div class="fc-amt" style="color:${amtCol}">${dispAmt >= 0 ? '+' : ''}${fmt(dispAmt)}</div>
+            ${bal !== undefined ? `<div class="fc-bal" style="color:${bal < 0 ? 'var(--red)' : 'var(--mut)'}">${fmt(bal)}</div>` : ''}
+          </div>
+        </div>`;
+      }
+    }
+
+    if (!h) h = `<div class="empty">No upcoming transactions for this account.<br><br>Tap <strong>+ Add</strong> to schedule a transaction.</div>`;
+
+    const fw = document.getElementById('fc-wrap');
+    fw.innerHTML = h;
+    fw.style.display = '';
+    document.getElementById('cal-wrap').style.display = 'none';
+  },
+
+  selectAcct(id) {
+    state.selectedAcct = id;
+    saveState();
+    this.render();
+  },
+
+  bindHeader() {
+    document.getElementById('btn-prev').onclick = () => {
+      if (state.month === 0) { state.year--; state.month = 11; }
+      else state.month--;
+      this.render();
+    };
+    document.getElementById('btn-next').onclick = () => {
+      if (state.month === 11) { state.year++; state.month = 0; }
+      else state.month++;
+      this.render();
+    };
+    document.getElementById('btn-today').onclick = () => {
+      const n = new Date();
+      state.year = n.getFullYear(); state.month = n.getMonth();
+      this.render();
+    };
+    document.getElementById('btn-add').onclick = () => this.openTxModal(null, todayISO());
+  },
+
+  bindViewToggle() {
+    document.querySelectorAll('.vbtn').forEach(btn => {
+      btn.onclick = () => {
+        state.view = btn.dataset.view;
+        document.querySelectorAll('.vbtn').forEach(b => b.classList.remove('on'));
+        btn.classList.add('on');
+        this.render();
+      };
+    });
+  },
+
+  openModal(html) {
+    document.getElementById('modal').innerHTML = html;
+    document.getElementById('overlay').classList.add('open');
+    setTimeout(() => {
+      const fi = document.getElementById('modal').querySelector('input:not([type=hidden]):not([type=checkbox]),select');
+      if (fi) fi.focus();
+    }, 60);
+  },
+
+  closeModal() {
+    document.getElementById('overlay').classList.remove('open');
+    document.getElementById('modal').innerHTML = '';
+  },
+
+  /* ── Day Modal ── */
+  openDayModal(dateISO) {
+    const { txByDate, balMap, warns } = this.forecast;
+    const txs = txByDate[dateISO] || [];
+    const sel = getAcct(state.selectedAcct);
+    const bal = balMap[state.selectedAcct]?.[dateISO];
+    const isWarn = warns.has(dateISO);
+
+    let balHtml = '';
+    if (sel && bal !== undefined) {
+      balHtml = `<div style="font-size:12px;color:var(--mut);margin-top:2px">${esc(sel.name)}: <span style="font-family:var(--mono);font-weight:700;color:${bal < 0 ? 'var(--red)' : sel.color}">${fmt(bal)}</span>${isWarn ? `<span class="warn-badge">⚠ LOW</span>` : ''}</div>`;
+    }
+
+    let txHtml = '';
+    if (!txs.length) {
+      txHtml = `<div class="empty" style="padding:16px 0">No transactions on this day.</div>`;
+    } else {
+      txHtml = `<div class="dtxl">`;
+      for (const t of txs) {
+        const a = getAcct(t.accountId);
+        const toA = t.isTransfer && t.toAccountId ? getAcct(t.toAccountId) : null;
+        const sub = toA ? `${esc(a?.name || '')} → ${esc(toA.name)}` : esc(a?.name || '');
+        const amtCol = t.amount >= 0 ? 'var(--grn)' : 'var(--red)';
+        txHtml += `<div class="dtx" onclick="app.closeModal();setTimeout(()=>app.editTx('${t.id}'),60)">
+          <div class="dtx-dot" style="background:${a?.color || '#888'}"></div>
+          <div class="dtx-lbl">
+            <div class="l1">${esc(t.label)}</div>
+            <div class="l2">${sub}${t.recurrence ? ` · ${t.recurrence}` : ''}</div>
+          </div>
+          <div class="dtx-amt" style="color:${amtCol}">${t.amount >= 0 ? '+' : ''}${fmt(t.amount)}</div>
+        </div>`;
+      }
+      txHtml += `</div>`;
+    }
+
+    this.openModal(`
+      <div class="mhdr">
+        <div>
+          <div class="mtit">${fmtDateLong(dateISO)}</div>
+          ${balHtml}
+        </div>
+        <button class="mclose" onclick="app.closeModal()">×</button>
+      </div>
+      ${txHtml}
+      <button class="addbtn" onclick="app.closeModal();setTimeout(()=>app.openTxModal(null,'${dateISO}'),60)">+ Add Transaction for this Day</button>
+    `);
+  },
+
+  /* ── Transaction Modal ── */
+  openTxModal(tx, defaultDate) {
+    const isEdit = !!tx;
+    const id = tx?.id || uid();
+    const label = tx?.label || '';
+    const accountId = tx?.accountId || state.selectedAcct || state.accounts[0]?.id || '';
+    const rawAmt = tx ? Math.abs(tx.amount) : '';
+    const isExp = tx ? tx.amount < 0 : true;
+    const isTrans = tx?.isTransfer || false;
+    const date = tx?.date || defaultDate || todayISO();
+    const recur = tx?.recurrence || '';
+    const endDate = tx?.endDate || '';
+    const toAcct = tx?.toAccountId || '';
+    const notes = tx?.notes || '';
+
+    const acctOpts = state.accounts.map(a =>
+      `<option value="${a.id}"${a.id === accountId ? ' selected' : ''}>${esc(a.name)}</option>`
+    ).join('');
+
+    const toOpts = `<option value="">-- Select account --</option>` +
+      state.accounts.filter(a => a.id !== accountId).map(a =>
+        `<option value="${a.id}"${a.id === toAcct ? ' selected' : ''}>${esc(a.name)}</option>`
+      ).join('');
+
+    const recurOpts = RECURS.map(([v, l]) =>
+      `<option value="${v}"${v === recur ? ' selected' : ''}>${l}</option>`
+    ).join('');
+
+    this.openModal(`
+      <div class="mhdr">
+        <div class="mtit">${isEdit ? 'Edit Transaction' : 'New Transaction'}</div>
+        <button class="mclose" onclick="app.closeModal()">×</button>
+      </div>
+
+      <div class="fg">
+        <label class="fl">Description</label>
+        <input class="fi" id="tx-label" type="text" value="${esc(label)}" placeholder="e.g. Rent, Netflix, JobSeeker…">
+      </div>
+
+      <div id="tx-type-wrap" ${isTrans ? 'style="display:none"' : ''}>
+        <div class="tt">
+          <button class="tb ${!isExp && !isTrans ? 'ti' : ''}" onclick="app.setTxType('income')">+ Income</button>
+          <button class="tb ${isExp && !isTrans ? 'te' : ''}" onclick="app.setTxType('expense')">− Expense</button>
+        </div>
+      </div>
+
+      <div class="fr2">
+        <div class="fg">
+          <label class="fl">Amount ($)</label>
+          <input class="fi" id="tx-amount" type="number" min="0" step="0.01" value="${rawAmt}" placeholder="0.00">
+        </div>
+        <div class="fg">
+          <label class="fl">Date</label>
+          <input class="fi" id="tx-date" type="date" value="${date}">
+        </div>
+      </div>
+
+      <div class="fg">
+        <label class="fl">Account</label>
+        <select class="fi" id="tx-acct" onchange="app.refreshToOpts()">${acctOpts}</select>
+      </div>
+
+      <div class="cbr">
+        <input type="checkbox" id="tx-is-transfer" ${isTrans ? 'checked' : ''} onchange="app.toggleTransfer()">
+        <label for="tx-is-transfer">This is a transfer to another account</label>
+      </div>
+
+      <div id="tx-to-wrap" ${!isTrans ? 'style="display:none"' : ''}>
+        <div class="fg">
+          <label class="fl">Transfer To</label>
+          <select class="fi" id="tx-to">${toOpts}</select>
+        </div>
+      </div>
+
+      <div class="fr2">
+        <div class="fg">
+          <label class="fl">Repeats</label>
+          <select class="fi" id="tx-recur" onchange="app.toggleEndDate()">${recurOpts}</select>
+        </div>
+        <div class="fg" id="tx-end-wrap" ${!recur ? 'style="display:none"' : ''}>
+          <label class="fl">End Date (optional)</label>
+          <input class="fi" id="tx-end" type="date" value="${endDate}">
+        </div>
+      </div>
+
+      <div class="fg">
+        <label class="fl">Notes</label>
+        <textarea class="fi" id="tx-notes" placeholder="Optional…">${esc(notes)}</textarea>
+      </div>
+
+      <input type="hidden" id="tx-id" value="${id}">
+      <input type="hidden" id="tx-is-exp" value="${isExp ? '1' : '0'}">
+
+      <div class="brow">
+        ${isEdit ? `<button class="btn bd" onclick="app.deleteTx('${id}')">Delete</button>` : ''}
+        <button class="btn bg" onclick="app.closeModal()">Cancel</button>
+        <button class="btn bp" onclick="app.saveTx()">Save</button>
+      </div>
+    `);
+  },
+
+  setTxType(type) {
+    document.getElementById('tx-is-exp').value = type === 'expense' ? '1' : '0';
+    const btns = document.querySelectorAll('#modal .tb');
+    btns.forEach(b => b.classList.remove('ti', 'te'));
+    if (type === 'income') btns[0].classList.add('ti');
+    else btns[1].classList.add('te');
+  },
+
+  toggleTransfer() {
+    const isTrans = document.getElementById('tx-is-transfer').checked;
+    document.getElementById('tx-to-wrap').style.display = isTrans ? '' : 'none';
+    document.getElementById('tx-type-wrap').style.display = isTrans ? 'none' : '';
+    this.refreshToOpts();
+  },
+
+  toggleEndDate() {
+    const r = document.getElementById('tx-recur').value;
+    document.getElementById('tx-end-wrap').style.display = r ? '' : 'none';
+  },
+
+  refreshToOpts() {
+    const toEl = document.getElementById('tx-to');
+    if (!toEl) return;
+    const acctId = document.getElementById('tx-acct').value;
+    const cur = toEl.value;
+    toEl.innerHTML = `<option value="">-- Select account --</option>` +
+      state.accounts.filter(a => a.id !== acctId).map(a =>
+        `<option value="${a.id}"${a.id === cur ? ' selected' : ''}>${esc(a.name)}</option>`
+      ).join('');
+  },
+
+  saveTx() {
+    const label = document.getElementById('tx-label').value.trim();
+    const amount = parseFloat(document.getElementById('tx-amount').value);
+    const date = document.getElementById('tx-date').value;
+    const accountId = document.getElementById('tx-acct').value;
+    const isTransfer = document.getElementById('tx-is-transfer').checked;
+    const isExp = document.getElementById('tx-is-exp').value === '1';
+    const toAccountId = document.getElementById('tx-to')?.value || '';
+    const recurrence = document.getElementById('tx-recur').value;
+    const endDate = document.getElementById('tx-end')?.value || '';
+    const notes = document.getElementById('tx-notes').value.trim();
+    const id = document.getElementById('tx-id').value;
+
+    if (!label) { alert('Please enter a description.'); return; }
+    if (!amount || isNaN(amount) || amount <= 0) { alert('Please enter a valid amount greater than zero.'); return; }
+    if (!date) { alert('Please enter a date.'); return; }
+    if (!accountId) { alert('Please select an account.'); return; }
+    if (isTransfer && !toAccountId) { alert('Please select a destination account for the transfer.'); return; }
+
+    const finalAmt = isTransfer
+      ? -Math.abs(amount)
+      : (isExp ? -Math.abs(amount) : Math.abs(amount));
+
+    const tx = { id, label, accountId, amount: finalAmt, date, recurrence, endDate, isTransfer, toAccountId, notes };
+
+    const idx = state.transactions.findIndex(t => t.id === id);
+    if (idx >= 0) state.transactions[idx] = tx;
+    else state.transactions.push(tx);
+
+    saveState();
+    this.recompute();
+    this.closeModal();
+    this.render();
+  },
+
+  editTx(id) {
+    const tx = state.transactions.find(t => t.id === id);
+    if (tx) this.openTxModal(tx, null);
+  },
+
+  deleteTx(id) {
+    if (!confirm('Delete this transaction?')) return;
+    state.transactions = state.transactions.filter(t => t.id !== id);
+    saveState();
+    this.recompute();
+    this.closeModal();
+    this.render();
+  },
+
+  /* ── Account Modal ── */
+  openAcctModal(acct) {
+    const isEdit = !!acct;
+    const id = acct?.id || uid();
+    const name = acct?.name || '';
+    const type = acct?.type || 'transaction';
+    const balance = acct?.balance ?? 0;
+    const color = acct?.color || COLORS[state.accounts.length % COLORS.length];
+    const lowAlert = acct?.lowAlert ?? 200;
+    const creditLimit = acct?.creditLimit || 5000;
+
+    const typeOpts = Object.entries(ATYPES).map(([v, l]) =>
+      `<option value="${v}"${v === type ? ' selected' : ''}>${l}</option>`
+    ).join('');
+
+    const swatches = COLORS.map(c =>
+      `<div class="cs${c === color ? ' on' : ''}" style="background:${c}" onclick="app.pickColor('${c}',this)"></div>`
+    ).join('');
+
+    const showLimit = type === 'credit' || type === 'bnpl';
+
+    this.openModal(`
+      <div class="mhdr">
+        <div class="mtit">${isEdit ? 'Edit Account' : 'New Account'}</div>
+        <button class="mclose" onclick="app.closeModal()">×</button>
+      </div>
+
+      <div class="fg">
+        <label class="fl">Account Name</label>
+        <input class="fi" id="ac-name" type="text" value="${esc(name)}" placeholder="e.g. ANZ Everyday, Afterpay">
+      </div>
+
+      <div class="fr2">
+        <div class="fg">
+          <label class="fl">Type</label>
+          <select class="fi" id="ac-type" onchange="app.toggleCreditLimit()">${typeOpts}</select>
+        </div>
+        <div class="fg">
+          <label class="fl">Current Balance ($)</label>
+          <input class="fi" id="ac-balance" type="number" step="0.01" value="${balance}" placeholder="0.00">
+        </div>
+      </div>
+
+      <div class="fr2">
+        <div class="fg">
+          <label class="fl">Low Balance Alert ($)</label>
+          <input class="fi" id="ac-alert" type="number" step="0.01" value="${lowAlert}" placeholder="e.g. 200">
+        </div>
+        <div class="fg" id="ac-limit-wrap" ${!showLimit ? 'style="display:none"' : ''}>
+          <label class="fl">Credit / Spend Limit ($)</label>
+          <input class="fi" id="ac-limit" type="number" step="0.01" value="${creditLimit}">
+        </div>
+      </div>
+
+      <div class="fg">
+        <label class="fl">Colour</label>
+        <div class="cp" id="ac-colors">${swatches}</div>
+        <input type="hidden" id="ac-color" value="${color}">
+      </div>
+
+      <div class="tip">
+        <strong>Current Balance</strong> = what your account shows right now. The forecast projects forward from this figure.<br>
+        ${showLimit ? '<strong>Credit/BNPL:</strong> Enter a <em>negative</em> balance (e.g. −450 if you owe $450). The Low Balance Alert fires when the balance drops below the threshold.' : 'The Low Balance Alert fires if your projected balance falls below the threshold on any future date.'}
+      </div>
+
+      <input type="hidden" id="ac-id" value="${id}">
+
+      <div class="brow">
+        ${isEdit ? `<button class="btn bd" onclick="app.deleteAcct('${id}')">Delete</button>` : ''}
+        <button class="btn bg" onclick="app.closeModal()">Cancel</button>
+        <button class="btn bp" onclick="app.saveAcct()">Save</button>
+      </div>
+    `);
+  },
+
+  toggleCreditLimit() {
+    const t = document.getElementById('ac-type').value;
+    document.getElementById('ac-limit-wrap').style.display = (t === 'credit' || t === 'bnpl') ? '' : 'none';
+  },
+
+  pickColor(color, el) {
+    document.querySelectorAll('#ac-colors .cs').forEach(c => c.classList.remove('on'));
+    el.classList.add('on');
+    document.getElementById('ac-color').value = color;
+  },
+
+  saveAcct() {
+    const name = document.getElementById('ac-name').value.trim();
+    const type = document.getElementById('ac-type').value;
+    const balance = parseFloat(document.getElementById('ac-balance').value) || 0;
+    const color = document.getElementById('ac-color').value;
+    const lowAlert = parseFloat(document.getElementById('ac-alert').value) || 0;
+    const creditLimit = parseFloat(document.getElementById('ac-limit')?.value) || 0;
+    const id = document.getElementById('ac-id').value;
+
+    if (!name) { alert('Please enter an account name.'); return; }
+
+    const acct = { id, name, type, balance, color, lowAlert };
+    if (type === 'credit' || type === 'bnpl') acct.creditLimit = creditLimit;
+
+    const idx = state.accounts.findIndex(a => a.id === id);
+    if (idx >= 0) state.accounts[idx] = acct;
+    else {
+      state.accounts.push(acct);
+      state.selectedAcct = id;
+    }
+
+    saveState();
+    this.recompute();
+    this.closeModal();
+    this.render();
+  },
+
+  newAcct() { this.openAcctModal(null); },
+  editAcct(id) { const a = getAcct(id); if (a) this.openAcctModal(a); },
+
+  deleteAcct(id) {
+    if (!confirm('Delete this account and all its transactions?')) return;
+    state.accounts = state.accounts.filter(a => a.id !== id);
+    state.transactions = state.transactions.filter(t => t.accountId !== id && t.toAccountId !== id);
+    if (state.selectedAcct === id) state.selectedAcct = state.accounts[0]?.id || '';
+    saveState();
+    this.recompute();
+    this.closeModal();
+    this.render();
+  },
+
+  /* ── Export / Import ── */
+  exportData() {
+    const data = JSON.stringify({ accounts: state.accounts, transactions: state.transactions }, null, 2);
+    const blob = new Blob([data], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cashcal-backup-${todayISO()}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  },
+
+  importData() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    input.onchange = e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = ev => {
+        try {
+          const data = JSON.parse(ev.target.result);
+          if (!data.accounts || !data.transactions) throw new Error('Invalid file');
+          if (!confirm(`Import ${data.accounts.length} accounts and ${data.transactions.length} transactions? This will replace your current data.`)) return;
+          state.accounts = data.accounts;
+          state.transactions = data.transactions;
+          state.selectedAcct = data.accounts[0]?.id || '';
+          saveState();
+          this.recompute();
+          this.render();
+          alert('Data imported successfully.');
+        } catch {
+          alert('Could not read file. Make sure it is a valid CashCal export.');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  },
+};
+
+/* ─── Boot ──────────────────────────────────────────── */
+app.init();
+</script>
+</body>
+</html>
