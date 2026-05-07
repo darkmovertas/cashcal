@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>CashCal</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Space+Mono&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f4f8;--surf:#fff;--cell:#fff;--cell-past:#fafbfc;--bord:#e2e8f0;--bord2:#cbd5e0;
+  --txt:#1a202c;--mut:#718096;--grn:#16a34a;--red:#dc2626;--amb:#d97706;
+  --acc:#2563eb;--acc-lt:#eff6ff;--acc-bord:#bfdbfe;
+  --hdr:#1e3a5f;--hdr-t:#fff;
+  --font:'Nunito',sans-serif;--mono:'Space Mono',monospace;
+}
+html{font-size:15px}
+body{background:var(--bg);color:var(--txt);font-family:var(--font);min-height:100vh;-webkit-font-smoothing:antialiased}
+button{cursor:pointer;font-family:var(--font)}
+input,select,textarea{font-family:var(--font)}
+select option{background:#fff;color:#1a202c}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--bord2);border-radius:2px}
+
+.app{display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* TOP BAR */
+.topbar{background:var(--hdr);color:var(--hdr-t);display:flex;align-items:center;gap:6px;padding:0 10px;height:46px;flex-shrink:0}
+.logo{font-size:15px;font-weight:900;color:#fff;flex-shrink:0;letter-spacing:-.2px}
+.mnav{display:flex;align-items:center;gap:5px;flex:1;justify-content:center}
+.mnav h2{font-size:13px;font-weight:800;min-width:155px;text-align:center;color:#fff;white-space:nowrap}
+.nb{background:rgba(255,255,255,.13);border:none;color:#fff;width:26px;height:26px;border-radius:5px;font-size:15px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer}
+.nb:hover{background:rgba(255,255,255,.22)}
+.tr{display:flex;gap:5px;flex-shrink:0}
+.tbb{background:rgba(255,255,255,.13);border:none;color:#fff;height:26px;border-radius:5px;font-size:11px;font-weight:700;padding:0 8px;cursor:pointer;white-space:nowrap;flex-shrink:0}
+.tbb:hover{background:rgba(255,255,255,.22)}
+.tbb.p{background:#fff;color:var(--hdr)}
+.tbb.p:hover{background:#e8f0fe}
+
+/* NET BAR */
+.netbar{background:#152d4a;padding:3px 10px;display:flex;align-items:center;gap:8px;overflow-x:auto;flex-shrink:0;scrollbar-width:none;flex-wrap:nowrap}
+.netbar::-webkit-scrollbar{display:none}
+.ni{display:flex;align-items:center;gap:3px;white-space:nowrap;flex-shrink:0}
+.nd{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.nl{font-size:9px;color:rgba(255,255,255,.5)}
+.nv{font-family:var(--mono);font-size:10px;font-weight:700}
+.nb-sep{width:1px;height:12px;background:rgba(255,255,255,.15);flex-shrink:0}
+
+/* ACCOUNT TABS */
+.tabs{display:flex;overflow-x:auto;flex-shrink:0;background:var(--surf);border-bottom:2px solid var(--bord);scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{padding:7px 13px;font-size:12px;font-weight:700;color:var(--mut);border-bottom:3px solid transparent;cursor:pointer;white-space:nowrap;background:transparent;border:none;border-bottom:3px solid transparent;transition:all .1s;flex-shrink:0}
+.tab:hover{color:var(--txt);background:var(--bg)}
+.tab.on{color:var(--txt);border-bottom-color:var(--acc)}
+.tab .tb{display:block;font-family:var(--mono);font-size:9px;font-weight:400;margin-top:1px}
+.tab-dot{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;vertical-align:middle}
+.tab-add{padding:7px 13px;font-size:19px;color:var(--mut);border:none;background:none;cursor:pointer;flex-shrink:0}
+.tab-add:hover{color:var(--acc)}
+
+/* VIEW TOGGLE */
+.vtog{display:flex;gap:4px;padding:5px 8px;background:var(--surf);border-bottom:1px solid var(--bord);flex-shrink:0}
+.vb{padding:3px 10px;border-radius:5px;font-size:11px;font-weight:700;background:transparent;color:var(--mut);border:1px solid var(--bord);cursor:pointer;transition:all .1s}
+.vb.on{background:var(--acc);color:#fff;border-color:var(--acc)}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;overflow-x:auto}
+
+/* CALENDAR */
+.cal{padding:5px;min-width:700px}
+.cal-head{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;margin-bottom:2px}
+.cdh{text-align:center;font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;padding:4px 2px;background:var(--hdr);color:#fff;border-radius:4px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.day{background:var(--cell);border:1px solid var(--bord);border-radius:5px;min-height:95px;display:flex;flex-direction:column;overflow:hidden;cursor:pointer;transition:border-color .1s}
+.day:hover{border-color:var(--bord2)}
+.day.past{background:var(--cell-past)}
+.day.other{opacity:.25;pointer-events:none;background:#f8f9fa}
+.day.today{border-color:var(--acc)!important;background:var(--acc-lt)}
+.day.warn{border-color:var(--amb)!important;background:#fffbeb}
+.dhdr{display:flex;align-items:center;justify-content:space-between;padding:2px 4px;border-bottom:1px solid var(--bord);flex-shrink:0;min-height:22px}
+.dnum{font-size:10px;font-weight:800;color:var(--mut);width:17px;height:17px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.day.today .dnum{background:var(--acc);color:#fff}
+.wpip{width:5px;height:5px;border-radius:50%;background:var(--amb);flex-shrink:0}
+.dtxs{flex:1;padding:2px 2px 1px}
+.txr{display:flex;align-items:center;gap:2px;padding:1px 3px;border-radius:3px;margin-bottom:1px;cursor:pointer;min-height:15px}
+.txr:hover{filter:brightness(.93)}
+.txl{flex:1;font-size:9px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;line-height:1.4;color:#1a202c}
+.txa{font-family:var(--mono);font-size:8.5px;font-weight:700;white-space:nowrap;flex-shrink:0;line-height:1.4}
+.more{font-size:8px;color:var(--mut);padding:0 3px;line-height:1.4}
+.dbal{padding:2px 4px;text-align:right;border-top:1px solid var(--bord);flex-shrink:0}
+.dbal span{font-family:var(--mono);font-size:8.5px;font-weight:700}
+
+/* LEDGER */
+.ledger{padding:8px 10px}
+.led-hdr{font-size:11px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;padding:6px 2px 4px}
+.cc-info{background:var(--acc-lt);border:1px solid var(--acc-bord);border-radius:7px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:#1e40af;line-height:1.6}
+.cc-info strong{font-weight:800}
+.lt{width:100%;border-collapse:collapse;font-size:12px}
+.lt th{text-align:left;padding:5px 8px;font-size:9px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.4px;border-bottom:2px solid var(--bord);white-space:nowrap}
+.lt th.r,.lt td.r{text-align:right}
+.lt td{padding:5px 8px;border-bottom:1px solid var(--bord);vertical-align:middle}
+.lt tr:hover td{background:var(--bg);cursor:pointer}
+.lt tr.past td{color:var(--mut)}
+.lt tr.today-row td{background:var(--acc-lt);font-weight:700}
+.ldate{white-space:nowrap;font-size:11px}
+.llab{display:flex;align-items:center;gap:5px}
+.ldot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.lamt{font-family:var(--mono);font-size:11px;font-weight:700;white-space:nowrap}
+.lbal{font-family:var(--mono);font-size:11px;white-space:nowrap}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.52);z-index:500;display:none;align-items:flex-end;justify-content:center}
+.overlay.open{display:flex}
+@media(min-width:580px){.overlay{align-items:center;padding:16px}}
+.modal{background:#fff;border-radius:16px 16px 0 0;width:100%;max-width:500px;max-height:92vh;overflow-y:auto;padding:16px 16px 24px;animation:su .15s ease}
+@media(min-width:580px){.modal{border-radius:12px}}
+@keyframes su{from{transform:translateY(14px);opacity:0}to{transform:none;opacity:1}}
+.mhdr{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:13px}
+.mtit{font-size:16px;font-weight:900}
+.mcls{background:#f1f5f9;border:none;color:var(--mut);width:27px;height:27px;border-radius:6px;font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0}
+.mcls:hover{background:#e2e8f0}
+.fg{margin-bottom:10px}
+.fl{display:block;font-size:9px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.fi{width:100%;background:#fff;border:1px solid var(--bord2);border-radius:7px;color:var(--txt);padding:8px 10px;font-size:13px}
+.fi:focus{outline:none;border-color:var(--acc);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.fi::placeholder{color:var(--mut);opacity:1}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.fr3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+textarea.fi{resize:vertical;min-height:46px}
+.trow{display:flex;gap:4px;margin-bottom:10px}
+.tbtn{flex:1;padding:7px;border-radius:7px;font-size:12px;font-weight:700;border:1.5px solid var(--bord);color:var(--mut);background:#fff;cursor:pointer;transition:all .1s}
+.tbtn.ion{background:#f0fdf4;color:var(--grn);border-color:#86efac}
+.tbtn.eon{background:#fef2f2;color:var(--red);border-color:#fca5a5}
+.cbr{display:flex;align-items:center;gap:7px;margin-bottom:10px;cursor:pointer}
+.cbr input{width:14px;height:14px;accent-color:var(--acc);cursor:pointer;flex-shrink:0}
+.cbr label{font-size:12px;font-weight:600;cursor:pointer}
+.brow{display:flex;gap:7px;margin-top:13px}
+.btn{border:none;border-radius:7px;padding:9px 14px;font-size:12px;font-weight:700;cursor:pointer;transition:all .1s}
+.bp{background:var(--acc);color:#fff}
+.bp:hover{background:#1d4ed8}
+.bd{background:#fef2f2;color:var(--red);border:1px solid #fca5a5}
+.bd:hover{background:#fee2e2}
+.bs{background:#f1f5f9;color:var(--mut)}
+.bs:hover{background:#e2e8f0;color:var(--txt)}
+.tipbox{background:var(--acc-lt);border:1px solid var(--acc-bord);border-radius:6px;padding:8px 10px;margin-bottom:10px;font-size:11px;color:#1e40af;line-height:1.5}
+.sep{height:1px;background:var(--bord);margin:10px 0}
+.day-txr{display:flex;align-items:center;gap:8px;border-left:4px solid transparent;border-radius:6px;padding:8px 10px;cursor:pointer;margin-bottom:5px;transition:filter .1s}
+.day-txr:hover{filter:brightness(.96)}
+
+/* FAB */
+.fab{position:fixed;bottom:18px;right:18px;width:50px;height:50px;border-radius:50%;background:var(--acc);color:#fff;font-size:26px;border:none;box-shadow:0 4px 14px rgba(37,99,235,.4);display:none;align-items:center;justify-content:center;z-index:200;cursor:pointer;line-height:1}
+@media(max-width:680px){.fab{display:flex}}
+
+.empty{color:var(--mut);text-align:center;padding:32px 16px;font-size:13px;line-height:1.7}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <span class="logo">💰 CashCal</span>
+    <div class="mnav">
+      <button class="nb" id="bp">‹</button>
+      <h2 id="mlbl"></h2>
+      <button class="nb" id="bn">›</button>
+    </div>
+    <div class="tr">
+      <button class="tbb" id="btd">Today</button>
+      <button class="tbb" id="bex" title="Export backup">⬇</button>
+      <button class="tbb" id="bim" title="Import backup">⬆</button>
+      <button class="tbb p" id="badd">+ Add</button>
+    </div>
+  </div>
+  <div class="netbar" id="netbar"></div>
+  <div class="tabs" id="tabs"></div>
+  <div class="vtog">
+    <button class="vb on" data-v="cal">📅 Calendar</button>
+    <button class="vb" data-v="ledger">📋 Ledger</button>
+  </div>
+  <div class="main" id="main">
+    <div id="cal-view"></div>
+    <div id="led-view" style="display:none"></div>
+  </div>
+</div>
+<button class="fab" id="fab">+</button>
+<div class="overlay" id="overlay"><div class="modal" id="modal"></div></div>
+
+<script>
+/* ══ CashCal v2 ══════════════════════════════════════════════ */
+const SK = 'cashcal_v3';
+const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const ATYPES = {transaction:'Transaction',savings:'Savings',credit:'Credit Card',bnpl:'BNPL'};
+const RECS = [['','One-off'],['weekly','Weekly'],['fortnightly','Fortnightly'],['monthly','Monthly'],['quarterly','Quarterly'],['annually','Annually']];
+const APAL = ['#bfdbfe','#fde68a','#bbf7d0','#fce7f3','#fed7aa','#a5f3fc','#ede9fe','#d1fae5','#e0e7ff','#fef08a','#fcd34d','#6ee7b7','#fbcfe8','#c7d2fe'];
+const ACOLS = ['#2563eb','#059669','#dc2626','#d97706','#7c3aed','#db2777','#0891b2','#65a30d','#ea580c','#be185d'];
+
+/* ── Pre-loaded Data ─────────────────────────────────────── */
+const D_ACCOUNTS = [
+  {id:'classic', name:'NAB Classic',       type:'transaction', balance:390.97,   color:'#2563eb', lowAlert:100},
+  {id:'bills',   name:'FOR BILLS ONLY',    type:'transaction', balance:168.93,   color:'#059669', lowAlert:50},
+  {id:'credit',  name:'Credit Card #0667', type:'credit',      balance:-4707.67, color:'#d97706', lowAlert:-4900, creditLimit:5000},
+  {id:'isaver',  name:'NAB iSaver',        type:'savings',     balance:0.22,     color:'#7c3aed', lowAlert:0},
+  {id:'rewards', name:'Reward Saver',      type:'savings',     balance:0.01,     color:'#db2777', lowAlert:0},
+  {id:'afterpay',name:'Afterpay',          type:'bnpl',        balance:0,        color:'#dc2626', lowAlert:-1500},
+  {id:'zip',     name:'Zip Pay',           type:'bnpl',        balance:0,        color:'#be185d', lowAlert:-1500},
+];
+
+const D_TXS = [
+  // NAB Classic — income
+  {id:'c1',  label:'NSCC Pay',       accountId:'classic', amount:1007.92,  date:'2026-05-13', recurrence:'fortnightly', endDate:'', isTransfer:false, toAccountId:'', notes:'Fortnightly — varies slightly'},
+  {id:'c2',  label:'Centrelink',     accountId:'classic', amount:429.19,   date:'2026-05-08', recurrence:'fortnightly', endDate:'', isTransfer:false, toAccountId:'', notes:'JobSeeker — varies with hours worked'},
+  // NAB Classic — outgoings
+  {id:'c3',  label:'To BILLS ONLY',  accountId:'classic', amount:-150,     date:'2026-05-13', recurrence:'fortnightly', endDate:'', isTransfer:true,  toAccountId:'bills',  notes:'On NSCC pay day'},
+  {id:'c4',  label:'BPAY Westpac MC',accountId:'classic', amount:-50,      date:'2026-05-13', recurrence:'fortnightly', endDate:'', isTransfer:false, toAccountId:'', notes:''},
+  {id:'c5',  label:'CC Min Payment', accountId:'classic', amount:-94.15,   date:'2026-05-15', recurrence:'monthly',     endDate:'', isTransfer:true,  toAccountId:'credit', notes:'Minimum monthly CC payment'},
+  // FOR BILLS ONLY — recurring direct debits
+  {id:'b1',  label:'Google One AI Pro',  accountId:'bills', amount:-32.99, date:'2026-05-02', recurrence:'monthly',  endDate:'', isTransfer:false, toAccountId:'', notes:'~2nd of month'},
+  {id:'b2',  label:'Stan',               accountId:'bills', amount:-12.00, date:'2026-05-07', recurrence:'monthly',  endDate:'', isTransfer:false, toAccountId:'', notes:'~7th of month'},
+  {id:'b3',  label:'HuggingFace',        accountId:'bills', amount:-10.25, date:'2026-05-07', recurrence:'monthly',  endDate:'', isTransfer:false, toAccountId:'', notes:'~7th of month'},
+  {id:'b4',  label:'Claude.ai',          accountId:'bills', amount:-35.19, date:'2026-05-10', recurrence:'monthly',  endDate:'', isTransfer:false, toAccountId:'', notes:'~10th of month'},
+  {id:'b5',  label:'Aussie Broadband',   accountId:'bills', amount:-95.00, date:'2026-05-15', recurrence:'monthly',  endDate:'', isTransfer:false, toAccountId:'', notes:'~15th of month'},
+  {id:'b6',  label:'Woolies Mobile',     accountId:'bills', amount:-28.00, date:'2026-05-20', recurrence:'monthly',  endDate:'', isTransfer:false, toAccountId:'', notes:'~20th of month'},
+  {id:'b7',  label:'ElevenLabs',         accountId:'bills', amount:-22.00, date:'2026-05-21', recurrence:'monthly',  endDate:'', isTransfer:false, toAccountId:'', notes:'~21st of month'},
+  {id:'b8',  label:'YouTube Premium',    accountId:'bills', amount:-39.99, date:'2026-05-22', recurrence:'monthly',  endDate:'', isTransfer:false, toAccountId:'', notes:'~22nd of month'},
+  {id:'b9',  label:"St Luke's",          accountId:'bills', amount:-5.05,  date:'2026-05-01', recurrence:'weekly',   endDate:'', isTransfer:false, toAccountId:'', notes:'Every Friday'},
+  {id:'b10', label:'Set 4 Life',         accountId:'bills', amount:-9.95,  date:'2026-05-08', recurrence:'weekly',   endDate:'', isTransfer:false, toAccountId:'', notes:'Every Friday'},
+  {id:'b11', label:'Saturday Lotto',     accountId:'bills', amount:-3.85,  date:'2026-05-03', recurrence:'weekly',   endDate:'', isTransfer:false, toAccountId:'', notes:'Every Sunday'},
+  // Credit Card — interest (charged ~1st of each month)
+  {id:'cr1', label:'CC Interest',        accountId:'credit', amount:-50.34, date:'2026-06-01', recurrence:'monthly', endDate:'', isTransfer:false, toAccountId:'', notes:'~1st of month — varies'},
+];
+
+const D_LCOLS = {
+  'NSCC Pay':'#bbf7d0', 'Centrelink':'#bfdbfe', 'To BILLS ONLY':'#fde68a',
+  'BPAY Westpac MC':'#fecaca', 'CC Min Payment':'#fed7aa',
+  'Google One AI Pro':'#fce7f3', 'Stan':'#fce7f3', 'HuggingFace':'#fef08a',
+  'Claude.ai':'#a5f3fc', 'Aussie Broadband':'#e0e7ff', 'Woolies Mobile':'#fce7f3',
+  'ElevenLabs':'#ede9fe', 'YouTube Premium':'#fce7f3', "St Luke's":'#fed7aa',
+  'Set 4 Life':'#fed7aa', 'Saturday Lotto':'#d1fae5', 'CC Interest':'#fde68a',
+  'Afterpay':'#fecaca', 'Zip Pay':'#fce7f3', 'Rent':'#fecaca',
+  'Octopus Survey':'#bbf7d0', 'Recycle Tomra':'#bbf7d0', 'Kmart':'#e0e7ff',
+  'Coles':'#d1fae5', 'Woolies':'#d1fae5', 'Chemist Warehouse':'#fce7f3',
+};
+
+/* ── State ───────────────────────────────────────────────── */
+let S = {
+  accounts:    D_ACCOUNTS.map(a=>({...a})),
+  transactions:D_TXS.map(t=>({...t})),
+  labelColors: {...D_LCOLS},
+  sel:  'classic',
+  view: 'cal',
+  year: new Date().getFullYear(),
+  month:new Date().getMonth(),
+};
+
+/* ── Utils ───────────────────────────────────────────────── */
+const uid   = () => Math.random().toString(36).slice(2,10);
+const today = () => new Date().toISOString().split('T')[0];
+const esc   = s => String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+const ga    = id => S.accounts.find(a=>a.id===id);
+
+function addD(iso, n) {
+  const d = new Date(iso+'T12:00:00'); d.setDate(d.getDate()+n);
+  return d.toISOString().split('T')[0];
+}
+function addM(iso, n) {
+  const d = new Date(iso+'T12:00:00'); d.setMonth(d.getMonth()+n);
+  return d.toISOString().split('T')[0];
+}
+function fmt(n) {
+  if(n==null||isNaN(n)) return '$0.00';
+  const s = Math.abs(n).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',');
+  return (n<0?'−$':'$')+s;
+}
+function fmtD(iso, opts) {
+  return new Date(iso+'T12:00:00').toLocaleDateString('en-AU', opts||{day:'numeric',month:'short',year:'2-digit'});
+}
+function lc(label) {
+  if(S.labelColors[label]) return S.labelColors[label];
+  const n = Object.keys(S.labelColors).length;
+  const c = APAL[n % APAL.length];
+  S.labelColors[label] = c; return c;
+}
+
+/* ── Persist ─────────────────────────────────────────────── */
+function load() {
+  try {
+    const sv = localStorage.getItem(SK);
+    if(!sv) return;
+    const d = JSON.parse(sv);
+    if(d.accounts)     S.accounts     = d.accounts;
+    if(d.transactions) S.transactions = d.transactions;
+    if(d.labelColors)  S.labelColors  = d.labelColors;
+    if(d.sel)          S.sel          = d.sel;
+  } catch(e){}
+}
+function save() {
+  try { localStorage.setItem(SK, JSON.stringify({accounts:S.accounts,transactions:S.transactions,labelColors:S.labelColors,sel:S.sel})); } catch(e){}
+}
+
+/* ── Forecast Engine ─────────────────────────────────────── */
+function expand(txns, from, to) {
+  const out = [];
+  for(const t of txns) {
+    if(t.date > to) continue;
+    if(!t.recurrence) { if(t.date>=from) out.push({...t,eDate:t.date}); continue; }
+    const end = t.endDate||to;
+    let cur = t.date, s=0;
+    while(cur<from && s++<900) cur = step(cur,t.recurrence);
+    s=0;
+    while(cur<=to && cur<=end && s++<900) {
+      out.push({...t,eDate:cur});
+      cur = step(cur,t.recurrence);
+    }
+  }
+  return out;
+}
+function step(iso,r) {
+  if(r==='weekly')       return addD(iso,7);
+  if(r==='fortnightly')  return addD(iso,14);
+  if(r==='monthly')      return addM(iso,1);
+  if(r==='quarterly')    return addM(iso,3);
+  if(r==='annually')     return addM(iso,12);
+  return addD(iso,9999);
+}
+function forecast() {
+  const now = today();
+  const horizon = addM(now,7);
+  const mStart = `${S.year}-${String(S.month+1).padStart(2,'0')}-01`;
+  const from = mStart < now ? mStart : now;
+  const exp = expand(S.transactions, from, horizon);
+  const txByDate = {};
+  for(const t of exp) (txByDate[t.eDate]=txByDate[t.eDate]||[]).push(t);
+  const balMap = {};
+  for(const a of S.accounts) {
+    balMap[a.id]={};
+    let b = parseFloat(a.balance)||0;
+    let d = now;
+    while(d<=horizon) {
+      for(const t of txByDate[d]||[]) {
+        if(t.accountId===a.id)             b += t.amount;
+        if(t.isTransfer&&t.toAccountId===a.id) b -= t.amount;
+      }
+      balMap[a.id][d]=b;
+      d=addD(d,1);
+    }
+  }
+  return {txByDate,balMap};
+}
+
+/* ── Render ──────────────────────────────────────────────── */
+function render() {
+  document.getElementById('mlbl').textContent = MONTHS[S.month]+' '+S.year;
+  const fc = forecast();
+  renderNetBar(fc);
+  renderTabs(fc);
+  if(S.view==='cal') {
+    renderCal(fc);
+    document.getElementById('cal-view').style.display='';
+    document.getElementById('led-view').style.display='none';
+  } else {
+    renderLedger(fc);
+    document.getElementById('cal-view').style.display='none';
+    document.getElementById('led-view').style.display='';
+  }
+}
+
+function renderNetBar(fc) {
+  const now = today();
+  const net = S.accounts.reduce((s,a)=>s+(fc.balMap[a.id]?.[now]??a.balance),0);
+  let h = `<span class="ni"><span class="nv" style="color:${net>=0?'#86efac':'#fca5a5'}">NET: ${fmt(net)}</span></span><span class="nb-sep"></span>`;
+  for(const a of S.accounts) {
+    const b = fc.balMap[a.id]?.[now]??a.balance;
+    const c = b<0?'#fca5a5':b<(a.lowAlert||0)?'#fbbf24':'rgba(255,255,255,.8)';
+    h+=`<span class="ni"><span class="nd" style="background:${a.color}"></span><span class="nl">${esc(a.name.replace('FOR BILLS ONLY','BILLS').replace('NAB ','').replace(' Saver','').replace(' Pay',''))}:</span><span class="nv" style="color:${c}">${fmt(b)}</span></span>`;
+  }
+  document.getElementById('netbar').innerHTML=h;
+}
+
+function renderTabs(fc) {
+  const now = today();
+  let h='';
+  for(const a of S.accounts) {
+    const b = fc.balMap[a.id]?.[now]??a.balance;
+    const bc = b<0?'#dc2626':b<(a.lowAlert||0)?'#d97706':'#16a34a';
+    h+=`<button class="tab${a.id===S.sel?' on':''}" onclick="selAcct('${a.id}')" ondblclick="editAcct('${a.id}')">
+      <span><span class="tab-dot" style="background:${a.color}"></span>${esc(a.name)}</span>
+      <span class="tb" style="color:${bc}">${fmt(b)}</span>
+    </button>`;
+  }
+  h+=`<button class="tab-add" onclick="newAcct()" title="Add account">+</button>`;
+  document.getElementById('tabs').innerHTML=h;
+}
+
+function renderCal(fc) {
+  const {txByDate,balMap} = fc;
+  const now = today();
+  const {year,month,sel} = S;
+  const selA = ga(sel);
+  const fd = new Date(year,month,1).getDay();
+  const off = (fd+6)%7;
+  const dim = new Date(year,month+1,0).getDate();
+  const py = month===0?year-1:year, pm = month===0?11:month-1;
+  const pdim = new Date(py,pm+1,0).getDate();
+  const ny = month===11?year+1:year, nm = month===11?0:month+1;
+
+  let h = `<div class="cal"><div class="cal-head">`;
+  ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].forEach(d=>{h+=`<div class="cdh">${d}</div>`;});
+  h+=`</div><div class="cal-grid">`;
+
+  const cell = (iso, other) => {
+    const dtxs = (txByDate[iso]||[]).filter(t=>t.accountId===sel||(t.isTransfer&&t.toAccountId===sel));
+    const bal = balMap[sel]?.[iso];
+    const isToday = iso===now, isPast = iso<now;
+    const isWarn = selA && bal!==undefined && bal<(parseFloat(selA.lowAlert)||0) && iso>=now;
+    const d = parseInt(iso.split('-')[2]);
+    let cls='day';
+    if(other) cls+=' other';
+    else if(isToday) cls+=' today';
+    else if(isPast)  cls+=' past';
+    if(isWarn&&!other) cls+=' warn';
+
+    let rows='';
+    const show = dtxs.slice(0,7);
+    for(const t of show) {
+      const inc = t.isTransfer&&t.toAccountId===sel;
+      const amt = inc?-t.amount:t.amount;
+      const col = lc(t.label);
+      const astr = (amt>=0?'+':'−')+'$'+Math.abs(amt).toFixed(2);
+      const ac = amt>=0?'#15803d':'#b91c1c';
+      rows+=`<div class="txr" style="background:${col}" onclick="etx(event,'${t.id}')">
+        <span class="txl" title="${esc(t.label)}">${esc(t.label)}</span>
+        <span class="txa" style="color:${ac}">${astr}</span>
+      </div>`;
+    }
+    if(dtxs.length>7) rows+=`<div class="more">+${dtxs.length-7} more</div>`;
+
+    const showBal = !other && iso>=now && bal!==undefined;
+    const balHtml = showBal
+      ?`<div class="dbal"><span style="color:${bal<0?'#dc2626':bal<200?'#d97706':'#16a34a'}">${fmt(bal)}</span></div>`:
+      (isPast&&!other?`<div class="dbal"><span style="color:var(--mut);font-size:8px">—</span></div>`:'');
+
+    return `<div class="${cls}" onclick="dayModal('${iso}')">
+      <div class="dhdr">
+        <span class="dnum">${d}</span>
+        ${isWarn&&!other?'<span class="wpip" title="Low balance warning"></span>':''}
+      </div>
+      <div class="dtxs">${rows}</div>
+      ${balHtml}
+    </div>`;
+  };
+
+  for(let i=off-1;i>=0;i--) {
+    const d=pdim-i;
+    h+=cell(`${py}-${String(pm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,true);
+  }
+  for(let d=1;d<=dim;d++) {
+    h+=cell(`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,false);
+  }
+  const tot=off+dim, np=tot%7===0?0:7-tot%7;
+  for(let d=1;d<=np;d++) {
+    h+=cell(`${ny}-${String(nm+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`,true);
+  }
+  h+=`</div></div>`;
+  document.getElementById('cal-view').innerHTML=h;
+}
+
+function renderLedger(fc) {
+  const now = today();
+  const acct = ga(S.sel);
+  const horizon = addM(now,6);
+  const lookback = addM(now,-3);
+  const exp = expand(S.transactions,lookback,horizon);
+  const entries=[];
+  for(const t of exp) {
+    const src = t.accountId===S.sel;
+    const dst = t.isTransfer&&t.toAccountId===S.sel;
+    if(!src&&!dst) continue;
+    const amt = dst?-t.amount:t.amount;
+    entries.push({date:t.eDate,label:t.label,amount:amt,txId:t.id,rec:t.recurrence});
+  }
+  entries.sort((a,b)=>a.date.localeCompare(b.date));
+
+  const nowBal = parseFloat(acct.balance)||0;
+  const futEntries = entries.filter(e=>e.date>=now);
+  let fbal=nowBal;
+  const futWithBal = futEntries.map(e=>{fbal+=e.amount;return{...e,bal:fbal};});
+  const pastEntries = entries.filter(e=>e.date<now).sort((a,b)=>a.date.localeCompare(b.date));
+
+  let h=`<div class="ledger">`;
+  if(acct.type==='credit') {
+    const limit=parseFloat(acct.creditLimit||5000);
+    h+=`<div class="led-hdr">${esc(acct.name)} — Credit Card Ledger</div>
+    <div class="cc-info">
+      <strong>Current balance:</strong> ${fmt(nowBal)}&nbsp;&nbsp;|&nbsp;&nbsp;
+      <strong>Credit limit:</strong> $${limit.toFixed(2)}&nbsp;&nbsp;|&nbsp;&nbsp;
+      <strong>Available credit:</strong> ${fmt(limit+nowBal)}<br>
+      <span style="font-size:10px;opacity:.7">Annual fee due 9 Jan 2027 · Interest rate 13.49% variable · Statement ~2nd of month</span>
+    </div>`;
+  } else {
+    h+=`<div class="led-hdr">${esc(acct.name)}</div>`;
+  }
+
+  h+=`<table class="lt"><thead><tr>
+    <th>Date</th><th>Description</th><th class="r">In</th><th class="r">Out</th><th class="r">Balance</th>
+  </tr></thead><tbody>`;
+
+  for(const e of pastEntries) {
+    const c=lc(e.label);
+    const ina=e.amount>0?fmt(e.amount):''; const outa=e.amount<0?fmt(-e.amount):'';
+    h+=`<tr class="past" onclick="etx(null,'${e.txId}')">
+      <td class="ldate">${fmtD(e.date)}</td>
+      <td><span class="llab"><span class="ldot" style="background:${c}"></span>${esc(e.label)}</span></td>
+      <td class="r lamt" style="color:${ina?'#16a34a':'var(--mut)'}">${ina}</td>
+      <td class="r lamt" style="color:${outa?'#dc2626':'var(--mut)'}">${outa}</td>
+      <td class="r lbal" style="color:var(--mut)">—</td>
+    </tr>`;
+  }
+
+  h+=`<tr class="today-row"><td colspan="4" style="font-size:10px;font-weight:700;color:#2563eb;text-transform:uppercase;letter-spacing:.5px">▶ TODAY — Balance: ${fmt(nowBal)}</td><td class="r lbal" style="color:#2563eb">${fmt(nowBal)}</td></tr>`;
+
+  for(const e of futWithBal) {
+    const c=lc(e.label);
+    const ina=e.amount>0?fmt(e.amount):''; const outa=e.amount<0?fmt(-e.amount):'';
+    const bc=e.bal<0?'#dc2626':e.bal<200?'#d97706':'#16a34a';
+    const rec=e.rec?` <span style="font-size:9px;color:var(--mut)">· ${e.rec}</span>`:'';
+    h+=`<tr onclick="etx(null,'${e.txId}')">
+      <td class="ldate">${fmtD(e.date)}</td>
+      <td><span class="llab"><span class="ldot" style="background:${c}"></span>${esc(e.label)}${rec}</span></td>
+      <td class="r lamt" style="color:${ina?'#16a34a':'var(--mut)'}">${ina}</td>
+      <td class="r lamt" style="color:${outa?'#dc2626':'var(--mut)'}">${outa}</td>
+      <td class="r lbal" style="color:${bc}">${fmt(e.bal)}</td>
+    </tr>`;
+  }
+
+  if(!entries.length) h+=`<tr><td colspan="5"><div class="empty">No scheduled transactions.<br>Tap <strong>+ Add</strong> to get started.</div></td></tr>`;
+  h+=`</tbody></table></div>`;
+  document.getElementById('led-view').innerHTML=h;
+}
+
+/* ── Day Modal ───────────────────────────────────────────── */
+function dayModal(iso) {
+  const fc = forecast();
+  const {txByDate,balMap} = fc;
+  const dtxs = (txByDate[iso]||[]).filter(t=>t.accountId===S.sel||(t.isTransfer&&t.toAccountId===S.sel));
+  const bal = balMap[S.sel]?.[iso];
+  const dstr = new Date(iso+'T12:00:00').toLocaleDateString('en-AU',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  const shortD = new Date(iso+'T12:00:00').toLocaleDateString('en-AU',{day:'numeric',month:'short'});
+  const selA = ga(S.sel);
+
+  let rows='';
+  if(!dtxs.length) {
+    rows=`<div class="empty" style="padding:16px 0">No transactions scheduled on this day.</div>`;
+  } else {
+    for(const t of dtxs) {
+      const inc=t.isTransfer&&t.toAccountId===S.sel;
+      const amt=inc?-t.amount:t.amount;
+      const col=lc(t.label);
+      const ac=amt>=0?'#16a34a':'#dc2626';
+      const rec=t.recurrence?` · ${t.recurrence}`:'';
+      const src=ga(t.accountId);
+      rows+=`<div class="day-txr" style="background:${col}22;border-left-color:${col}" onclick="closeModal();setTimeout(()=>etx(null,'${t.id}'),80)">
+        <div style="flex:1">
+          <div style="font-size:13px;font-weight:700">${esc(t.label)}</div>
+          <div style="font-size:10px;color:var(--mut);margin-top:1px">${esc(src?.name||'')}${rec}</div>
+        </div>
+        <div style="font-family:var(--mono);font-size:13px;font-weight:700;color:${ac}">${amt>=0?'+':'−'}$${Math.abs(amt).toFixed(2)}</div>
+      </div>`;
+    }
+  }
+
+  const balLine = bal!==undefined&&iso>=today()
+    ?`<div style="font-size:11px;color:var(--mut);margin-top:2px">Projected balance: <strong style="color:${bal<0?'#dc2626':'#16a34a'}">${fmt(bal)}</strong></div>`:'';
+
+  openModal(`
+    <div class="mhdr">
+      <div><div class="mtit">${dstr}</div>${balLine}</div>
+      <button class="mcls" onclick="closeModal()">×</button>
+    </div>
+    ${rows}
+    <button onclick="closeModal();setTimeout(()=>txModal(null,'${iso}'),80)"
+      style="width:100%;background:#eff6ff;border:1.5px dashed #bfdbfe;border-radius:7px;color:#2563eb;padding:9px;font-size:12px;font-weight:700;cursor:pointer;margin-top:8px">
+      + Add transaction for ${shortD}
+    </button>
+  `);
+}
+
+function etx(evt, id) {
+  if(evt) evt.stopPropagation();
+  const t = S.transactions.find(x=>x.id===id);
+  if(t) txModal(t,null);
+}
+
+/* ── Transaction Modal ───────────────────────────────────── */
+function txModal(tx, defDate) {
+  const isE=!!tx;
+  const id=tx?.id||uid();
+  const label=tx?.label||'';
+  const aId=tx?.accountId||S.sel;
+  const rawA=tx?Math.abs(tx.amount):'';
+  const isTr=tx?.isTransfer||false;
+  const isExp=tx?(tx.amount<0):true;
+  const date=tx?.date||defDate||today();
+  const rec=tx?.recurrence||'';
+  const end=tx?.endDate||'';
+  const toA=tx?.toAccountId||'';
+  const notes=tx?.notes||'';
+  const curCol=lc(label||'Unlabelled');
+
+  const aOpts=S.accounts.map(a=>`<option value="${a.id}"${a.id===aId?' selected':''}>${esc(a.name)}</option>`).join('');
+  const tOpts=`<option value="">— select —</option>`+S.accounts.filter(a=>a.id!==aId).map(a=>`<option value="${a.id}"${a.id===toA?' selected':''}>${esc(a.name)}</option>`).join('');
+  const rOpts=RECS.map(([v,l])=>`<option value="${v}"${v===rec?' selected':''}>${l}</option>`).join('');
+
+  openModal(`
+    <div class="mhdr">
+      <div class="mtit">${isE?'Edit Transaction':'New Transaction'}</div>
+      <button class="mcls" onclick="closeModal()">×</button>
+    </div>
+    <div class="fg" style="display:flex;gap:8px;align-items:flex-end">
+      <div style="flex:1">
+        <label class="fl">Description</label>
+        <input class="fi" id="tl" type="text" value="${esc(label)}" placeholder="e.g. Coles, Centrelink, Afterpay…" list="lsug" oninput="syncCol()">
+        <datalist id="lsug">${Object.keys(S.labelColors).sort().map(l=>`<option value="${esc(l)}">`).join('')}</datalist>
+      </div>
+      <div>
+        <label class="fl">Colour</label>
+        <input type="color" id="tcol" value="${curCol}" title="Colour for this label — updates all transactions with the same name"
+          style="width:42px;height:38px;border:1px solid var(--bord2);border-radius:7px;cursor:pointer;padding:2px">
+      </div>
+    </div>
+    <div id="tt-row" ${isTr?'style="display:none"':''}>
+      <div class="trow">
+        <button class="tbtn ${!isExp&&!isTr?'ion':''}" id="tb-inc" onclick="setT('income')">+ Income</button>
+        <button class="tbtn ${isExp&&!isTr?'eon':''}" id="tb-exp" onclick="setT('expense')">− Expense</button>
+      </div>
+    </div>
+    <div class="fr2">
+      <div class="fg">
+        <label class="fl">Amount ($)</label>
+        <input class="fi" id="ta" type="number" min="0" step="0.01" value="${rawA}" placeholder="0.00">
+      </div>
+      <div class="fg">
+        <label class="fl">Date</label>
+        <input class="fi" id="td" type="date" value="${date}">
+      </div>
+    </div>
+    <div class="fg">
+      <label class="fl">Account</label>
+      <select class="fi" id="tac" onchange="rfTo()">${aOpts}</select>
+    </div>
+    <div class="cbr">
+      <input type="checkbox" id="ttr" ${isTr?'checked':''} onchange="togTr()">
+      <label for="ttr">Transfer to another account (e.g. bill payment, BNPL instalment)</label>
+    </div>
+    <div id="tto-wrap" ${!isTr?'style="display:none"':''}>
+      <div class="fg">
+        <label class="fl">Transfer To</label>
+        <select class="fi" id="tto">${tOpts}</select>
+      </div>
+    </div>
+    <div class="fr2">
+      <div class="fg">
+        <label class="fl">Repeats</label>
+        <select class="fi" id="trec" onchange="togEnd()">${rOpts}</select>
+      </div>
+      <div class="fg" id="tend-wrap" ${!rec?'style="display:none"':''}>
+        <label class="fl">End Date (optional)</label>
+        <input class="fi" id="tend" type="date" value="${end}">
+      </div>
+    </div>
+    <div class="fg">
+      <label class="fl">Notes</label>
+      <textarea class="fi" id="tnotes" placeholder="Optional…">${esc(notes)}</textarea>
+    </div>
+    <input type="hidden" id="tid" value="${id}">
+    <input type="hidden" id="tie" value="${isExp?'1':'0'}">
+    <div class="brow">
+      ${isE?`<button class="btn bd" onclick="delTx('${id}')">Delete</button>`:''}
+      <button class="btn bs" onclick="closeModal()">Cancel</button>
+      <button class="btn bp" onclick="saveTx()">Save</button>
+    </div>
+  `);
+}
+
+function syncCol() {
+  const label=document.getElementById('tl').value.trim();
+  if(label) document.getElementById('tcol').value=lc(label);
+}
+function setT(t) {
+  document.getElementById('tie').value=t==='expense'?'1':'0';
+  document.getElementById('tb-inc').className='tbtn'+(t==='income'?' ion':'');
+  document.getElementById('tb-exp').className='tbtn'+(t==='expense'?' eon':'');
+}
+function togTr() {
+  const on=document.getElementById('ttr').checked;
+  document.getElementById('tto-wrap').style.display=on?'':'none';
+  document.getElementById('tt-row').style.display=on?'none':'';
+  rfTo();
+}
+function togEnd() {
+  document.getElementById('tend-wrap').style.display=document.getElementById('trec').value?'':'none';
+}
+function rfTo() {
+  const el=document.getElementById('tto'); if(!el) return;
+  const aId=document.getElementById('tac').value, cur=el.value;
+  el.innerHTML=`<option value="">— select —</option>`+S.accounts.filter(a=>a.id!==aId).map(a=>`<option value="${a.id}"${a.id===cur?' selected':''}>${esc(a.name)}</option>`).join('');
+}
+function saveTx() {
+  const label=document.getElementById('tl').value.trim();
+  const amt=parseFloat(document.getElementById('ta').value);
+  const date=document.getElementById('td').value;
+  const aId=document.getElementById('tac').value;
+  const isTr=document.getElementById('ttr').checked;
+  const isExp=document.getElementById('tie').value==='1';
+  const toA=document.getElementById('tto')?.value||'';
+  const rec=document.getElementById('trec').value;
+  const end=document.getElementById('tend')?.value||'';
+  const notes=document.getElementById('tnotes').value.trim();
+  const id=document.getElementById('tid').value;
+  const col=document.getElementById('tcol').value;
+
+  if(!label){alert('Please enter a description.');return;}
+  if(!amt||isNaN(amt)||amt<=0){alert('Please enter a valid amount.');return;}
+  if(!date){alert('Please select a date.');return;}
+  if(isTr&&!toA){alert('Please select a destination account.');return;}
+
+  S.labelColors[label]=col;
+  const finalAmt=isTr?-Math.abs(amt):(isExp?-Math.abs(amt):Math.abs(amt));
+  const tx={id,label,accountId:aId,amount:finalAmt,date,recurrence:rec,endDate:end,isTransfer:isTr,toAccountId:toA,notes};
+  const idx=S.transactions.findIndex(t=>t.id===id);
+  if(idx>=0) S.transactions[idx]=tx; else S.transactions.push(tx);
+  save(); closeModal(); render();
+}
+function delTx(id) {
+  if(!confirm('Delete this transaction?')) return;
+  S.transactions=S.transactions.filter(t=>t.id!==id);
+  save(); closeModal(); render();
+}
+
+/* ── Account Modal ───────────────────────────────────────── */
+function acctModal(acct) {
+  const isE=!!acct;
+  const id=acct?.id||uid();
+  const name=acct?.name||'';
+  const type=acct?.type||'transaction';
+  const bal=acct?.balance??0;
+  const col=acct?.color||'#2563eb';
+  const low=acct?.lowAlert??0;
+  const lim=acct?.creditLimit||5000;
+  const tOpts=Object.entries({transaction:'Transaction Account',savings:'Savings Account',credit:'Credit Card',bnpl:'Buy Now Pay Later'})
+    .map(([v,l])=>`<option value="${v}"${v===type?' selected':''}>${l}</option>`).join('');
+  const sws=ACOLS.map(c=>`<div style="width:22px;height:22px;border-radius:50%;background:${c};cursor:pointer;border:2px solid ${c===col?'#1a202c':'transparent'};transition:transform .1s;flex-shrink:0" onclick="pCol('${c}',this)"></div>`).join('');
+  const showL=type==='credit'||type==='bnpl';
+
+  openModal(`
+    <div class="mhdr">
+      <div class="mtit">${isE?'Edit Account':'New Account'}</div>
+      <button class="mcls" onclick="closeModal()">×</button>
+    </div>
+    <div class="fg">
+      <label class="fl">Account Name</label>
+      <input class="fi" id="an" type="text" value="${esc(name)}" placeholder="e.g. NAB Classic">
+    </div>
+    <div class="fr2">
+      <div class="fg">
+        <label class="fl">Type</label>
+        <select class="fi" id="at" onchange="togLim()">${tOpts}</select>
+      </div>
+      <div class="fg">
+        <label class="fl">Current Balance ($)</label>
+        <input class="fi" id="ab" type="number" step="0.01" value="${bal}" placeholder="0.00">
+      </div>
+    </div>
+    <div class="fr2">
+      <div class="fg">
+        <label class="fl">Low Balance Alert ($)</label>
+        <input class="fi" id="ala" type="number" step="0.01" value="${low}" placeholder="e.g. 200">
+      </div>
+      <div class="fg" id="alim-wrap" ${!showL?'style="display:none"':''}>
+        <label class="fl">Credit / BNPL Limit ($)</label>
+        <input class="fi" id="alim" type="number" step="0.01" value="${lim}">
+      </div>
+    </div>
+    <div class="fg">
+      <label class="fl">Colour</label>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:3px" id="aswat">${sws}</div>
+      <input type="hidden" id="acol" value="${col}">
+    </div>
+    <div class="tipbox" style="margin-top:4px">
+      <strong>Credit/BNPL accounts:</strong> Enter current balance as a <em>negative number</em> (e.g. −$450 owed = enter −450).<br>
+      The <strong>Low Balance Alert</strong> flashes a warning on days the projected balance drops below this threshold.
+    </div>
+    <input type="hidden" id="aid" value="${id}">
+    <div class="brow">
+      ${isE?`<button class="btn bd" onclick="delAcct('${id}')">Delete</button>`:''}
+      <button class="btn bs" onclick="closeModal()">Cancel</button>
+      <button class="btn bp" onclick="saveAcct()">Save</button>
+    </div>
+  `);
+}
+function togLim() {
+  const t=document.getElementById('at').value;
+  document.getElementById('alim-wrap').style.display=(t==='credit'||t==='bnpl')?'':'none';
+}
+function pCol(c,el) {
+  document.querySelectorAll('#aswat div').forEach(s=>s.style.borderColor='transparent');
+  el.style.borderColor='#1a202c';
+  document.getElementById('acol').value=c;
+}
+function saveAcct() {
+  const name=document.getElementById('an').value.trim();
+  const type=document.getElementById('at').value;
+  const bal=parseFloat(document.getElementById('ab').value)||0;
+  const col=document.getElementById('acol').value;
+  const low=parseFloat(document.getElementById('ala').value)||0;
+  const lim=parseFloat(document.getElementById('alim')?.value)||5000;
+  const id=document.getElementById('aid').value;
+  if(!name){alert('Please enter an account name.');return;}
+  const acct={id,name,type,balance:bal,color:col,lowAlert:low};
+  if(type==='credit'||type==='bnpl') acct.creditLimit=lim;
+  const idx=S.accounts.findIndex(a=>a.id===id);
+  if(idx>=0) S.accounts[idx]=acct; else{S.accounts.push(acct);S.sel=id;}
+  save(); closeModal(); render();
+}
+function delAcct(id) {
+  if(!confirm('Delete this account and all its transactions?')) return;
+  S.accounts=S.accounts.filter(a=>a.id!==id);
+  S.transactions=S.transactions.filter(t=>t.accountId!==id&&t.toAccountId!==id);
+  if(S.sel===id) S.sel=S.accounts[0]?.id||'';
+  save(); closeModal(); render();
+}
+function newAcct(){acctModal(null);}
+function editAcct(id){acctModal(ga(id));}
+function selAcct(id) {
+  S.sel=id;
+  const a=ga(id);
+  if(a&&a.type==='credit'&&S.view!=='ledger') {
+    S.view='ledger';
+    document.querySelectorAll('.vb').forEach(b=>b.classList.toggle('on',b.dataset.v==='ledger'));
+  }
+  save(); render();
+}
+
+/* ── Modal helpers ───────────────────────────────────────── */
+function openModal(html) {
+  document.getElementById('modal').innerHTML=html;
+  document.getElementById('overlay').classList.add('open');
+  setTimeout(()=>{const fi=document.querySelector('#modal input:not([type=hidden]):not([type=checkbox]):not([type=color]),#modal select');if(fi)fi.focus();},60);
+}
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+
+/* ── Export / Import ─────────────────────────────────────── */
+function exportData() {
+  const d=JSON.stringify({accounts:S.accounts,transactions:S.transactions,labelColors:S.labelColors},null,2);
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([d],{type:'application/json'}));
+  a.download=`cashcal-backup-${today()}.json`; a.click();
+}
+function importData() {
+  const i=document.createElement('input'); i.type='file'; i.accept='.json';
+  i.onchange=e=>{
+    const r=new FileReader();
+    r.onload=ev=>{
+      try{
+        const d=JSON.parse(ev.target.result);
+        if(!d.accounts||!d.transactions) throw 0;
+        if(!confirm(`Import ${d.accounts.length} accounts and ${d.transactions.length} transactions?\nThis will replace your current data.`)) return;
+        S.accounts=d.accounts; S.transactions=d.transactions;
+        if(d.labelColors) S.labelColors=d.labelColors;
+        S.sel=d.accounts[0]?.id||'';
+        save(); render(); alert('Imported successfully.');
+      }catch{alert('Invalid CashCal backup file.');}
+    };
+    r.readAsText(e.target.files[0]);
+  };
+  i.click();
+}
+
+/* ── Bind events ─────────────────────────────────────────── */
+function bindAll() {
+  document.getElementById('bp').onclick=()=>{if(S.month===0){S.year--;S.month=11;}else S.month--;render();};
+  document.getElementById('bn').onclick=()=>{if(S.month===11){S.year++;S.month=0;}else S.month++;render();};
+  document.getElementById('btd').onclick=()=>{const n=new Date();S.year=n.getFullYear();S.month=n.getMonth();render();};
+  document.getElementById('badd').onclick=()=>txModal(null,today());
+  document.getElementById('fab').onclick=()=>txModal(null,today());
+  document.getElementById('bex').onclick=exportData;
+  document.getElementById('bim').onclick=importData;
+  document.getElementById('overlay').onclick=e=>{if(e.target===document.getElementById('overlay'))closeModal();};
+  document.querySelectorAll('.vb').forEach(b=>{
+    b.onclick=()=>{S.view=b.dataset.v;document.querySelectorAll('.vb').forEach(x=>x.classList.toggle('on',x===b));render();};
+  });
+}
+
+/* ── Boot ────────────────────────────────────────────────── */
+load();
+render();
+bindAll();
+</script>
+</body>
+</html>
